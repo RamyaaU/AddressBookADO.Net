@@ -8,116 +8,236 @@ namespace AddressBookADO.Net
 {
     public class AddressBookRepository
     {
-        /// Ensuring the established connection using the Sql connection specifying the property. 
-        public static SqlConnection connection { get; set; }
-        /// <summary>
-        ///UC1 Creating a method for checking for the validity of the connection.
-        /// </summary>
-        public void EnsureDataBaseConnection()
-        {
-            /// Creates a new connection for every method to avoid "ConnectionString property not initialized" exception
-            DBConnection dbc = new DBConnection();
-            connection = dbc.GetConnection();
-            using (connection)
-            {
-                Console.WriteLine("The Connection is created");
-            }
-            connection.Close();
-        }
+        private static string connectionString = @"Data Source=RAMYA\SQLEXPRESS;Initial Catalog=Address_Book_Service;Integrated Security=True";
+        SqlConnection connection = new SqlConnection(connectionString);
 
         /// <summary>
-        /// UC2 Getting all the stored records in the address book service table by fetching all the records
+        /// UC16
+        /// Gets all contacts.
         /// </summary>
-        public void GetAllContact()
+        /// <exception cref="System.Exception"></exception>
+        public void GetAllContacts()
         {
-            ///Creates a new connection for every method to avoid "ConnectionString property not initialized" exception
-            DBConnection dbc = new DBConnection();
-            connection = dbc.GetConnection();
-            AddressBookModel model = new AddressBookModel();
             try
             {
-                using (connection)
+                AddressBookModel model = new AddressBookModel();
+                using (this.connection)
                 {
-                    /// Query to get all the data from the table
-                    string query = @"select * from dbo.Address_Book";
-                    /// Impementing the command on the connection fetched database table
-                    SqlCommand command = new SqlCommand(query, connection);
-                    ///Opening the connection.
-                    connection.Open();
-                    /// executing the sql data reader to fetch the records
+                    string query = "Select * from New_Address_Book";
+                    SqlCommand command = new SqlCommand(query, this.connection);
+                    this.connection.Open();
                     SqlDataReader reader = command.ExecuteReader();
+
                     if (reader.HasRows)
                     {
-                        /// Mapping the data to the employee model class object
                         while (reader.Read())
                         {
-                            model.FirstName = reader.GetString(0);
-                            model.LastName = reader.GetString(1);
-                            model.Address = reader.GetString(2);
-                            model.City = reader.GetString(3);
-                            model.State = reader.GetString(4);
-                            model.Zip = reader.GetInt32(5);
-                            model.PhoneNumber = reader.GetInt64(6);
-                            model.EmailId = reader.GetString(7);
-                            model.AddressBookType = reader.GetString(8);
-                            model.AddressBookName = reader.GetString(9);
-                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}", model.FirstName, model.LastName,
-                                model.Address, model.City, model.State, model.Zip, model.PhoneNumber, model.EmailId, model.AddressBookType, model.AddressBookName);
-                            Console.WriteLine("\n");
+                            model.ContactId = reader.GetInt32(0);
+                            model.FirstName = reader.GetString(1);
+                            model.LastName = reader.GetString(2);
+                            model.Address = reader.GetString(3);
+                            model.City = reader.GetString(4);
+                            model.State = reader.GetString(5);
+                            model.Zip = reader.GetInt32(6);
+                            model.PhoneNumber = reader.GetString(7);
+                            model.Email = reader.GetString(8);
+
+                            Console.WriteLine(model.ContactId + "\t" + model.FirstName + "\t" + model.LastName + "\t" + model.Address + "\t"
+                                + model.City + "\t" + model.State + "\t" + model.Zip + "\t" + model.PhoneNumber + "\t" + model.Email);
+
+                            Console.WriteLine();
                         }
                     }
                     else
                     {
-                        Console.WriteLine("No data found");
+                        Console.WriteLine("Data Not Found");
                     }
                     reader.Close();
+                    this.connection.Close();
                 }
             }
-            /// Catching the null record exception
-            catch (Exception ex)
+            catch (Exception e)
             {
-                throw new Exception(ex.Message);
+                throw new Exception(e.Message);
             }
-            /// Always ensuring the closing of the connection
             finally
             {
-                connection.Close();
+                this.connection.Close();
             }
-
         }
+
         /// <summary>
-        /// UC3 Method to insert contact to the table using a stored procedure
+        /// UC17
+        /// Updates the contact table.
         /// </summary>
-        /// <param name="model"></param>
         /// <returns></returns>
-        public bool AddDataToTable(AddressBookModel model)
+        public bool UpdateContactTable()
         {
-            /// Creates a new connection for every method to avoid "ConnectionString property not initialized" exception
-            DBConnection dbc = new DBConnection();
-            connection = dbc.GetConnection();
             try
             {
-                /// Using the connection established
-                using (connection)
+                string query = @"update New_Address_Book set Address = 'Nizamabad' , City = 'Hyderabad' where  Id = 3";
+                using (this.connection)
                 {
-                    /// Implementing the stored procedure
-                    SqlCommand command = new SqlCommand("dbo.spAddContactDetails", connection);
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@FirstName", model.FirstName);
-                    command.Parameters.AddWithValue("@LastName", model.LastName);
-                    command.Parameters.AddWithValue("@AddressDetails", model.Address);
+                    SqlCommand command = new SqlCommand(query, this.connection);
+                    this.connection.Open();
+                    int result = command.ExecuteNonQuery();
+                    if (result != 0)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            finally
+            {
+                this.connection.Close();
+            }
+        }
+
+        /// <summary>
+        /// UC18
+        /// Retrieves the contact within date range.
+        /// </summary>
+        public void RetrieveContactWithinDateRange()
+        {
+            try
+            {
+                AddressBookModel model = new AddressBookModel();
+                using (this.connection)
+                {
+                    string query = @"select * from New_Address_Book  
+                    where  AddedDate between cast('01-01-2019' as date) and SYSDATETIME();";
+
+                    SqlCommand command = new SqlCommand(query, this.connection);
+                    this.connection.Open();
+                    SqlDataReader reader = command.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            model.ContactId = reader.GetInt32(0);
+                            model.FirstName = reader.GetString(1);
+                            model.LastName = reader.GetString(2);
+                            model.Address = reader.GetString(3);
+                            model.City = reader.GetString(4);
+                            model.State = reader.GetString(5);
+                            model.Zip = reader.GetInt32(6);
+                            model.PhoneNumber = reader.GetString(7);
+                            model.Email = reader.GetString(8);
+                            model.AddedDate = reader.GetDateTime(9);
+
+                            Console.WriteLine(model.ContactId + "\t" + model.FirstName + "\t" + model.LastName + "\t" + model.Address + "\t"
+                                + model.City + "\t" + model.State + "\t" + model.Zip + "\t" + model.PhoneNumber + "\t" + model.Email + "\t"
+                                + model.AddedDate);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No Data Found");
+                    }
+                    reader.Close();
+                    this.connection.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            finally
+            {
+                this.connection.Close();
+            }
+        }
+
+        /// <summary>
+        /// UC19
+        /// Retrieves the contact by city.
+        /// </summary>
+        /// <exception cref="System.Exception"></exception>
+        public void RetrieveContactByCity()
+        {
+            try
+            {
+                AddressBookModel model = new AddressBookModel();
+                using (this.connection)
+                {
+                    string query = @"select * from New_Address_Book where City = 'Bangalore';";
+
+                    SqlCommand command = new SqlCommand(query, this.connection);
+                    this.connection.Open();
+                    SqlDataReader reader = command.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            model.ContactId = reader.GetInt32(0);
+                            model.FirstName = reader.GetString(1);
+                            model.LastName = reader.GetString(2);
+                            model.Address = reader.GetString(3);
+                            model.City = reader.GetString(4);
+                            model.State = reader.GetString(5);
+                            model.Zip = reader.GetInt32(6);
+                            model.PhoneNumber = reader.GetString(7);
+                            model.Email = reader.GetString(8);
+                            model.AddedDate = reader.GetDateTime(9);
+
+                            Console.WriteLine(model.ContactId + "\t" + model.FirstName + "\t" + model.LastName + "\t" + model.Address + "\t"
+                                + model.City + "\t" + model.State + "\t" + model.Zip + "\t" + model.PhoneNumber + "\t" + model.Email + "\t"
+                                + model.AddedDate);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No Data Found");
+                    }
+                    reader.Close();
+                    this.connection.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            finally
+            {
+                this.connection.Close();
+            }
+        }
+
+        /// <summary>
+        /// Adds the contact to database.
+        /// </summary>
+        /// <param name="model">The model.</param>
+        public bool AddContactToDatabase(AddressBookModel model)
+        {
+            try
+            {
+                using (this.connection)
+                {
+                    // Created instance of the given query and connection
+                    SqlCommand command = new SqlCommand("spAddContact", this.connection);
+                    // Command type  as text for stored procedure
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    // Adds the values to the stored procedure
+
+                    command.Parameters.AddWithValue("@First_Name", model.FirstName);
+                    command.Parameters.AddWithValue("@Last_Name", model.LastName);
+                    command.Parameters.AddWithValue("@Address", model.Address);
                     command.Parameters.AddWithValue("@City", model.City);
-                    command.Parameters.AddWithValue("@StateName", model.State);
+                    command.Parameters.AddWithValue("@State", model.State);
                     command.Parameters.AddWithValue("@Zip", model.Zip);
-                    command.Parameters.AddWithValue("@PhoneNo", model.PhoneNumber);
-                    command.Parameters.AddWithValue("@Email", model.EmailId);
-                    command.Parameters.AddWithValue("@addressBookType", model.AddressBookType);
-                    command.Parameters.AddWithValue("@addressBookName", model.AddressBookName);
+                    command.Parameters.AddWithValue("@Phone_Number", model.PhoneNumber);
+                    command.Parameters.AddWithValue("@Email", model.Email);
+                    command.Parameters.AddWithValue("@AddedDate", model.AddedDate);
 
-                    connection.Open();
+                    this.connection.Open();
                     var result = command.ExecuteNonQuery();
-                    connection.Close();
-                    /// Return the result of the transaction i.e. the dml operation to update data
+                    this.connection.Close();
+
                     if (result != 0)
                     {
                         return true;
@@ -125,96 +245,17 @@ namespace AddressBookADO.Net
                     return false;
                 }
             }
-            /// Catching any type of exception generated during the run time 
-            catch (Exception ex)
+            catch (Exception e)
             {
-                throw new Exception(ex.Message);
+                Console.WriteLine(e.Message);
             }
             finally
             {
-                connection.Close();
+                this.connection.Close();
             }
-        }
-        /// <summary>
-        ///  UC 4 Ability to Edit the contactType of the existing contact.
-        /// </summary>
-        /// <param name="FirstName"></param>
-        /// <param name="LastName"></param>
-        /// <param name="addressBookType"></param>
-        /// <returns></returns>
-        public bool EditContactUsingName(string FirstName, string LastName, string addressBookType)
-        {
-            /// Creates a new connection for every method to avoid "ConnectionString property not initialized" exception.
-            DBConnection dbc = new DBConnection();
-            connection = dbc.GetConnection();
-            try
-            {
-                using (connection)
-                {
-                    connection.Open();
-                    string query = @"update dbo.Address_Book set addressBookType = @parameter1
-                    where FirstName = @parameter2 and LastName = @parameter3";
-                    SqlCommand command = new SqlCommand(query, connection);
-                    command.Parameters.AddWithValue("@parameter1", addressBookType);
-                    command.Parameters.AddWithValue("@parameter2", FirstName);
-                    command.Parameters.AddWithValue("@parameter3", LastName);
-                    var result = command.ExecuteNonQuery();
-                    connection.Close();
-                    if (result > 0)
-                    {
-                        return true;
-                    }
-                    return false;
-                }
-            }
-            /// Catching any type of exception generated during the run time 
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            finally
-            {
-                connection.Close();
-            }
-        }
-        /// <summary>
-        /// UC5 Ability to  Deletes the contact with given first name and last name.
-        /// </summary>
-        /// <returns></returns>
-        public bool DeleteContact(string FirstName, string LastName)
-        {
-            ///Create a new conection for every method to avoid "ConnectionString property not initialized" exception.
-            DBConnection dbc = new DBConnection();
-            connection = dbc.GetConnection();
-            try
-            {
-                using (connection)
-                {
-                    connection.Open();
-                    string query = "delete from dbo.Address_Book where FirstName = @parameter1 and LastName =@parameter2";
-                    SqlCommand command = new SqlCommand(query, connection);
-                    /// Binding the parameter to the formal parameters
-                    command.Parameters.AddWithValue("@parameter1", FirstName);
-                    command.Parameters.AddWithValue("@parameter2", LastName);
-                    /// Storing the result of the executed query
-                    var result = command.ExecuteNonQuery();
-                    connection.Close();
-                    if (result != 0)
-                    {
-                        return true;
-                    }
-                    return false;
-                }
-            }
-            /// Catching any type of exception generated during the run time
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            finally
-            {
-                connection.Close();
-            }
+            return false;
         }
     }
 }
+
+  
