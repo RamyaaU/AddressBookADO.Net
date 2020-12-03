@@ -12,7 +12,9 @@ namespace AddressBookADO.Net
         {
             Console.WriteLine("Hello, Welcome to AddressBookADO.Net!");
             ///Creating Instance object of AddressBookRepository class.
-            
+            AddressBookRepository addressBookRepo = new AddressBookRepository();
+            //gets all contacts from database
+            addressBookRepo.GetAllContacts();
         }
     }
 }
