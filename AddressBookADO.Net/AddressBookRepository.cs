@@ -75,7 +75,7 @@ namespace AddressBookADO.Net
         {
             try
             {
-                string query = @"update New_Address_Book set Address = 'Banjara Hills' , City = 'Hyderabad' where  Id = 3";
+                string query = @"update New_Address_Book set Address = 'Nizamabad' , City = 'Hyderabad' where  Id = 3";
                 using (this.connection)
                 {
                     SqlCommand command = new SqlCommand(query, this.connection);
